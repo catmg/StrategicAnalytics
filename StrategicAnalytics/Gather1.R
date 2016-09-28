@@ -6,17 +6,8 @@
 # 
 ################
 
-# Load packages
-library(repmis)
-library(countrycode)
 
-# Place the URL into the object FinURL
-FinURL <- "https://dl.dropbox.com/u/12581470/code/Replicability_code/Fin_Trans_Replication_Journal/Data/public.fin.msm.model.csv"
 
-# Download data
-FinRegulatorData <- source_data(FinURL)
+# Read file from local Directory after GitHub Repository was replicated localy.
+dfPurchase <- read.table("./StrategicAnalytics/Data/PASTAPURCHASE.csv", header = TRUE)
 
-# Create standardized country ID numbers based iso 2 character codes
-FinRegulatorData$iso2c <- countrycode(FinRegulatorData$country,
-                    origin = "country.name",
-                    destination = "iso2c")
