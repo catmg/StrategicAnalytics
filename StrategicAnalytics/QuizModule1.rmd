@@ -1,14 +1,12 @@
----
-title: "Untitled"
-output: html_document
----
+% Quiz Module 1 For Coursera Strategic Analytics
+% Cesar Torres
+% Created: 01/28/2016
+% Updated: 01/28/2016 15:00
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and Microsoft Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **R Tools | Publish | Preview** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+This documen answer the questions posted for Module 1 
 
 ```{r}
-summary(cars)
+head(dfPurchase)
 ```
 
 You can also embed plots, for example:

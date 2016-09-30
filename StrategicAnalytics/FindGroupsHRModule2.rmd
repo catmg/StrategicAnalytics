@@ -1,0 +1,132 @@
+% Finding Groups within data Module 2 For Coursera Strategic Analytics
+% Cesar Torres
+% Created: 01/28/2016
+% Updated: 01/28/2016 14:00
+
+
+#Example 2 - Human Resources
+
+In this case the business issue is **Employees Leaving the company**. Is always the business issue that drives the type of variables we are interested in.
+
+* Let's have a look to the our variables and see some summary statistics:
+	- S: Satisfaction variable under scale of 0 to 1
+	- LPE: Last project Evaluation by a client under scale of 0 to 1
+	- NP: Number of Project worked by an employee in the last 12 months
+	- ANH: Average number of hours worked on the last 12 months.
+	- TIC: Time Expend in the Company by the employee
+	- Newborn: Take a number of 1 if the employee has a newborn within the last 12 months and 0 otherwise.
+
+```{r ShowDataExample2, echo = FALSE}
+#The Gather2 has loaded the data into variable data
+str(data)
+summary(data)
+
+```
+
+Finding Groups using Hierarchical Clustering Example 2
+------------------------------------------------------
+Now let's try to find groups using hierarchical clustering and check is we obtain similar results. We select to create three clusters to keep it simple for the business. 
+First we need to standarize the data by extracting the mean and divide by the standard deviation of the variable.
+
+```{r hierarchicalClusteringExample2, echo = FALSE}
+#Create copy of data 
+testdata <- data
+#In order to compare the data we need to normalize the data using the scale function
+testdata <- scale(testdata)
+#Compute the distances of all observations in our dataset using the euclidean method.
+d <- dist(testdata, method = "euclidean")
+#We use the hclust function by passing the distances between the data points using the ward.D method.
+hcward <- hclust(d, method = "ward.D")
+#We waqnt to pass the number of Cluster we want to select. It is important to limit this number to groups that business can understand.
+data$groups <- cutree(hcward, k = 4) #Assign our points to to pur k=4 clusters
+aggdata = aggregate(. ~ groups, data = data, FUN = mean) # The aggregate() function presents a summary of a statistic, broken down by one or more groups. The "." indicates all we want the mean of all variables. Here we compute the mean of each variable for each group. 
+# One thing we would like to have is the proportion of our data that is in each cluster
+proptemp = aggregate(S ~ groups, data = data, FUN = length) # we create a variable called proptemp which computes the number of observations in each group (using the S variable, but you can take any.)
+aggdata$proportion = (proptemp$S) / sum(proptemp$S) # proportion of observations in each group we compute the ratio between proptemp and the total number of observations
+aggdata = aggdata[order(aggdata$proportion, decreasing = T),] # Let's order the groups from the larger to the smaller
+
+# Let's see the output by calling our aggdata variable
+aggdata
+```
+
+Remove "newborn" variable 
+-------------------------
+
+The Newborn variable is not really relevant and by being a dummy variable drives teh clustering too much!!!.  
+the distances between each variable is calculated excluding the Newborn variable and the hierarchical clustering is done. However, when groups are created, the original dataset that includes the Newborn variable is used.
+
+```{r removeNewborn, echo = FALSE}
+# As discussed in the videos, let's remove the Newborn variable, which is not really relevant and by being a dummy drives the clustering too much...
+testdata = data[, 1:5] # we create a new dataset, called "testdata" includes all the rows and the 5 first columns of our original dataset 
+
+# We then rerun the code used above
+testdata = scale(testdata) # We normalize again our original variables
+d = dist(testdata, method = "euclidean") # We compute the distances between observations
+hcward = hclust(d, method = "ward.D") # Hiearchical Clustering using Ward criterion
+
+data$groups = cutree(hcward, k = 4) # Create segments for k=4
+# Note that we re-use the original dataset "data" (where the variable Newborn is still present) and not "testdata" (where the variable Newborn has been removed)
+# Hence we'll be able to produce summary statistics also for the Newborn variable regardless it wasn't included when doing the second version of the clustering
+
+aggdata = aggregate(. ~ groups, data = data, FUN = mean) # Aggregate the values again
+
+proptemp = aggregate(S ~ groups, data = data, FUN = length) # Compute the number of observations per group
+aggdata$proportion = (proptemp$S) / sum(proptemp$S) # Compute the proportion
+aggdata = aggdata[order(aggdata$proportion, decreasing = T),] # Let's order the groups from the larger to the smaller
+
+# Let's see the output by calling our aggdata variable
+aggdata
+```
+
+Analysis of HR Clustering
+-------------------------
+
+We could do an ANOVA an analysis of variance to be systematic, but we can just vizualize the most noticiable differences.  
+  
+Segment 1 # Projects(NP): `r aggdata[aggdata$groups == 1, c('NP')]`  Utilization(ANP): `r aggdata[aggdata$groups == 1, c('ANP')]` Time('TIC'): `r aggdata[aggdata$groups == 1, c('TIC')]`  
+  
+Indicates that this groups didn't do many projects ans has been underutilized where the employees has been in the company for short time.  
+We can call this Segment 1 "Low Performance".  
+
+Segment 3 Satisfaction(S): `r aggdata[aggdata$groups == 3, c('S')]` Evaluation(LPE): `r aggdata[aggdata$groups == 3, c('LPE')]` # Projects(NP): `r aggdata[aggdata$groups == 3, c('NP')]`  Utilization(ANP): `r aggdata[aggdata$groups == 1, c('ANP')]` Time('TIC'): `r aggdata[aggdata$groups == 1, c('TIC')]`  
+
+Indicates that this group has low Satisfaction while having High Evaluation in projects they have done and they are being highly utilized with long time int he company.  
+We can call Segment 3 the "Burned Out"
+
+
+Segment 2 Satisfaction(S): `r aggdata[aggdata$groups == 2, c('S')]` Evaluation(LPE): `r aggdata[aggdata$groups == 2, c('LPE')]`   Utilization(ANP): `r aggdata[aggdata$groups == 2, c('ANP')]` Time('TIC'): `r aggdata[aggdata$groups == 2, c('TIC')]`  
+
+Indicates that this group has high Satisfaction while having High Evaluation in projects they have done and they are being highly utilized with long time int he company.  
+We can call Segment 2 the "High Potential"
+
+Segment 4 Satisfaction(S): `r aggdata[aggdata$groups == 4, c('S')]` Evaluation(LPE): `r aggdata[aggdata$groups == 4, c('LPE')]`   Utilization(ANP): `r aggdata[aggdata$groups == 4, c('ANP')]` Time('TIC'): `r aggdata[aggdata$groups == 4, c('TIC')]`  
+
+Idincates no characteristics.  
+We can call Segment 4 the "Misc."
+
+The Newborn variable is not included in the creation of groups (hierarchical clustering) since we can't do about it in practice. This variable will never be really actionable in any case. However, the company may consider 
+developing parent's benefits, such as paternity or maternity leave or on-site childcare. **We should consider variables that are acutally related to its actionability and it's relevance.** The user of Newbornd variable is 
+purely a business discussion and not a technical one.  
+  
+The Satisfaction is a consequence of everything else and we can't act directly. this variable has to be seen as a consequence and not as the driver of managerial impact. So we should focus in what is actionable in practice.
+
+The utilization can directly be impacted by mangers. We can start by staffing more people and reduce the number of utilization to have an impact in the level of satisfaction.  
+
+#### Here are the Conclusions  
+
+1. For the "Low performance", if they decide to leave the company or are fired, it may not be a priority to try to retain them.  
+2. For the "Burned Out", We should do something quicky for them. Manager should have detected earlier and take a proactive step.
+3. For the "High Potentials", the situation wold be more complex. Those employees can be hired by the client because we couldn't make them a better offer. a better raise or promotion, or better projects.
+4. For the "Misc", this group is exogenous we can't always explain everything. Which are explain by causes that are out of control. Other data may be collected trying to understnd this group.
+
+
+Final Thoughts
+--------------
+
+there is no such thing as on "optional clustering or segmentation approach" in practice. What matters is that we use the right clustering approach for the business problem at hand
+and that the conclusions are actionable.
+
+
+
+
+

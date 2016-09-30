@@ -1,0 +1,69 @@
+% Finding Groups within data Module 2 For Coursera Strategic Analytics
+% Cesar Torres
+% Created: 01/28/2016
+% Updated: 01/28/2016 14:00
+
+#Example 1
+
+Let's have a look to the our variables and see some summary statistics.
+ADS: Average Daily Sales
+CV: Coefficient of Variation
+
+```{r ShowData, echo = FALSE}
+#The Gather2 has loaded the data into variable data
+str(data)
+summary(data)
+
+```
+
+Finding Groups by Visual Inspection
+-----------------------------------
+
+let's plot our data to see if we can indetify groups visually
+
+```{r simplePlot, echo=FALSE}
+plot(data$CV, data$ADS, main = "SKU Example", ylab = "Average Daily Sales", xlab = "Coefficient of Variation")
+#draw a vertical line to separate the first group we detected visually
+abline(v = 0.2, col = "red")
+#draw an horizontal line to sepaate the second group we detected visually
+abline(h = 4, col = "red")
+#label the groups we detected visually
+text(0.15, 9.7, "Horses", col = "red")
+text(0.65, 9, "Wild Bulls", col = "red")
+text(0.8, 2, "Crickets", col = "red")
+
+```
+
+Finding Groups using Hierarchical Clustering
+--------------------------------------------
+Now let's try to find groups using hierarchical clustering and check is we obtain similar results. We select to create three clusters to keep it simple for the business.
+
+```{r hierarchicalClustering, echo = FALSE}
+#Create copy of data 
+testdata <- data
+#In order to compare the data we need to normalize the data using the scale function
+testdata <- scale(testdata)
+#Compute the distances of all observations in our dataset using the euclidean method.
+d <- dist(testdata, method = "euclidean")
+#We use the hclust function by passing the distances between the data points using the ward.D method.
+hcward <- hclust(d, method = "ward.D")
+#We waqnt to pass the number of Cluster we want to select. It is important to limit this number to groups that business can understand.
+data$groups <- cutree(hcward, k = 3)
+```
+
+Visualizing the Groups with more advance method
+-----------------------------------------------
+
+Now let's try to do a better visualizatio of the groups we found.
+
+```{r advanceGroupVisual, echo = FALSE, warning = FALSE}
+#Install the lattice package if not already installed.
+install.packages("lattice")
+#load the lattice package
+library(lattice)
+xyplot(ADS ~ CV, main = "After Clustering", type = "p", group=groups, data=data, #define the groups to be diffentiated
+        auto.key = list(title = "Group", space = "left", cex = 1.0, just = 0.95),#produce the legend
+        par.settings = list(superpose.line = list(pch = 0:18, cex = 1)),#pass the display settigns
+		col=c('blue', 'green', 'red'))#colors for plotting the points
+
+```
